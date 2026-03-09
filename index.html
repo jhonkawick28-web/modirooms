@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MODI ROOMS</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Share+Tech+Mono&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Share Tech Mono', monospace;
+            cursor: none
+        }
+
+        #gameCanvas {
+            display: block
+        }
+
+        #score {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            color: #ff6600;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 0 0 12px #ff6600, 0 0 24px #ff3300;
+            pointer-events: none;
+            letter-spacing: 2px
+        }
+
+        #health {
+            position: fixed;
+            top: 15px;
+            left: 20px;
+            color: #ff2222;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 0 0 12px #ff2222;
+            pointer-events: none
+        }
+
+        #wave {
+            position: fixed;
+            top: 42px;
+            left: 20px;
+            color: #cc4400;
+            font-size: 13px;
+            pointer-events: none;
+            letter-spacing: 3px
+        }
+
+        #ammo {
+            position: fixed;
+            top: 42px;
+            right: 20px;
+            color: #cc8800;
+            font-size: 13px;
+            pointer-events: none;
+            letter-spacing: 2px
+        }
+
+        #keysHUD {
+            position: fixed;
+            top: 68px;
+            right: 20px;
+            color: #ffcc00;
+            font-size: 14px;
+            font-weight: bold;
+            pointer-events: none;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px #ffcc00;
+        }
+
+        #hitMarker {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff0000;
+            font-size: 32px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.1s;
+            text-shadow: 0 0 20px #ff0000
+        }
+
+        #crosshair {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 32px;
+            height: 32px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 20
+        }
+
+        #minimap {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            border: 1px solid #ff660033;
+            opacity: 0.75;
+            pointer-events: none
+        }
+
+        #bloodOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0;
+            background: radial-gradient(ellipse at center, transparent 30%, rgba(160, 0, 0, 0.85) 100%);
+            transition: opacity 0.04s
+        }
+
+        #jumpscareFlash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 62;
+            opacity: 0;
+            background: #ff6600
+        }
+
+        #staticOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 55;
+            opacity: 0;
+            image-rendering: pixelated
+        }
+
+        #warningText {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff0000;
+            font-size: clamp(22px, 5vw, 48px);
+            font-weight: bold;
+            text-shadow: 0 0 30px #f00, 0 0 70px #800;
+            pointer-events: none;
+            z-index: 65;
+            opacity: 0;
+            text-align: center;
+            letter-spacing: 8px;
+            font-family: 'Creepster', cursive
+        }
+
+        #jumpscareImg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 61;
+            opacity: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.7)
+        }
+
+        #jumpscareImg canvas {
+            max-width: 60vw;
+            max-height: 80vh;
+            image-rendering: pixelated
+        }
+
+        #sanityBar {
+            position: fixed;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 6px;
+            background: #111;
+            border: 1px solid #440044;
+            pointer-events: none;
+            z-index: 10;
+            border-radius: 3px;
+            overflow: hidden
+        }
+
+        #sanityFill {
+            height: 100%;
+            width: 100%;
+            background: #9900cc;
+            border-radius: 3px;
+            transition: width 0.3s, background 0.5s
+        }
+
+        #sanityLabel {
+            position: fixed;
+            bottom: 31px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #55005588;
+            font-size: 9px;
+            letter-spacing: 4px;
+            pointer-events: none
+        }
+
+        #hearingRing {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid rgba(255, 100, 0, 0);
+            border-radius: 50%;
+            width: 200px;
+            height: 200px;
+            pointer-events: none;
+            z-index: 9;
+            transition: all 0.1s
+        }
+
+        #gameOver {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ff6600;
+            z-index: 100
+        }
+
+        #gameOver h1 {
+            font-size: clamp(40px, 9vw, 90px);
+            text-shadow: 0 0 50px #ff3300;
+            margin-bottom: 20px;
+            animation: flicker 1.5s infinite;
+            font-family: 'Creepster', cursive;
+            letter-spacing: 6px
+        }
+
+        #gameOver p {
+            font-size: 18px;
+            margin: 6px 0;
+            color: #cc5500
+        }
+
+        #restartBtn {
+            margin-top: 30px;
+            padding: 14px 42px;
+            font-size: 18px;
+            background: transparent;
+            color: #ff6600;
+            border: 2px solid #ff6600;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-weight: bold;
+            letter-spacing: 3px;
+            transition: all 0.2s
+        }
+
+        #restartBtn:hover {
+            background: #ff6600;
+            color: #000;
+            box-shadow: 0 0 30px #ff6600
+        }
+
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #030200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ff6600;
+            z-index: 100;
+            overflow: hidden
+        }
+
+        #startScreen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.15) 2px, rgba(0, 0, 0, 0.15) 4px);
+            pointer-events: none;
+            z-index: 1
+        }
+
+        #startScreen h1 {
+            font-size: clamp(28px, 6vw, 72px);
+            text-shadow: 0 0 60px #ff3300, 0 0 120px #cc0000;
+            margin-bottom: 6px;
+            animation: flicker 2.5s infinite;
+            letter-spacing: 6px;
+            font-family: 'Creepster', cursive;
+            z-index: 2;
+            position: relative
+        }
+
+        #startScreen .sub {
+            font-size: 13px;
+            color: #550000;
+            letter-spacing: 10px;
+            margin-bottom: 6px;
+            z-index: 2;
+            position: relative
+        }
+
+        #startScreen .warn {
+            font-size: 12px;
+            color: #990000;
+            margin: 3px 0;
+            letter-spacing: 3px;
+            z-index: 2;
+            position: relative
+        }
+
+        #startScreen .ctrl {
+            font-size: 12px;
+            color: #664433;
+            margin: 2px 0;
+            z-index: 2;
+            position: relative
+        }
+
+        #startBtn {
+            margin-top: 28px;
+            padding: 14px 46px;
+            font-size: 18px;
+            background: transparent;
+            color: #ff6600;
+            border: 2px solid #ff3300;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-weight: bold;
+            letter-spacing: 4px;
+            z-index: 2;
+            position: relative;
+            transition: all 0.3s
+        }
+
+        #startBtn:hover {
+            background: #ff3300;
+            color: #000;
+            box-shadow: 0 0 40px #ff3300, 0 0 80px #aa0000
+        }
+
+        #killFeed {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            pointer-events: none;
+            z-index: 15;
+            text-align: right
+        }
+
+        .killMsg {
+            color: #ff4400;
+            font-size: 11px;
+            letter-spacing: 2px;
+            opacity: 1;
+            transition: opacity 1s;
+            margin: 2px 0;
+            text-shadow: 0 0 8px #ff2200
+        }
+
+        #proximity {
+            position: fixed;
+            bottom: 55px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #cc0000;
+            font-size: 11px;
+            letter-spacing: 4px;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 15;
+            text-shadow: 0 0 15px #ff0000;
+            transition: opacity 0.3s
+        }
+
+        @keyframes flicker {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            89% {
+                opacity: 1
+            }
+
+            90% {
+                opacity: 0.1
+            }
+
+            93% {
+                opacity: 1
+            }
+
+            96% {
+                opacity: 0.3
+            }
+
+            98% {
+                opacity: 1
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) scale(1)
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.15)
+            }
+        }
+
+        @keyframes scanline {
+            0% {
+                background-position: 0 0
+            }
+
+            100% {
+                background-position: 0 100%
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <canvas id="minimap" width="120" height="120"></canvas>
+    <div id="bloodOverlay"></div>
+    <canvas id="staticOverlay"></canvas>
+    <div id="jumpscareFlash"></div>
+    <div id="jumpscareImg"><canvas id="jsCanvas" width="400" height="400"></canvas></div>
+    <div id="warningText"></div>
+    <div id="score">SCORE: 0</div>
+    <div id="health">❤ HP: 100</div>
+    <div id="wave">WAVE 1</div>
+    <div id="ammo">∞ BULLETS</div>
+    <div id="keysHUD">KEYS: 0/3</div>
+    <div id="hitMarker">✦</div>
+    <canvas id="crosshair" width="32" height="32"></canvas>
+    <div id="sanityBar">
+        <div id="sanityFill"></div>
+    </div>
+    <div id="sanityLabel">SANITY</div>
+    <div id="hearingRing"></div>
+    <div id="killFeed"></div>
+    <div id="proximity">⚠ MODI JI DETECTED ⚠</div>
+
+    <div id="gameOver">
+        <h1>YOU HAVE BEEN CLAIMED</h1>
+        <p id="finalScore"></p>
+        <p id="finalWave"></p>
+        <button id="restartBtn" onclick="restartGame()">ENTER AGAIN</button>
+    </div>
+
+    <div id="gameWin"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(200,180,100,0.9); flex-direction:column; align-items:center; justify-content:center; color:#000; z-index:100;">
+        <h1
+            style="font-size: clamp(40px, 9vw, 90px); font-family:'Share Tech Mono', monospace; text-shadow:0 0 20px #fff; letter-spacing: 5px;">
+            YOU ESCAPED!</h1>
+        <p id="winScore" style="font-size:24px; font-family:'Share Tech Mono'; margin: 15px 0; font-weight: bold;"></p>
+        <button onclick="restartGame()"
+            style="margin-top:30px; padding:15px 40px; font-size:20px; background:#fff; color:#000; border:4px solid #000; cursor:pointer; font-weight:bold; font-family:'Share Tech Mono'; transition: background 0.3s;">PLAY
+            AGAIN</button>
+    </div>
+
+    <div id="startScreen">
+        <h1>MODI ROOMS</h1>
+        <div class="sub">by Eshanth</div>
+        <div class="warn" style="margin-top:10px">⚠ NOT FOR THE FAINT OF HEART ⚠</div>
+        <div class="ctrl" style="margin-top:12px">WASD — Move &nbsp;|&nbsp; Mouse — Aim &nbsp;|&nbsp; LClick / F — Shoot
+        </div>
+        <div class="ctrl">RClick — ADS Zoom &nbsp;|&nbsp; E — Pick up health kit</div>
+        <div class="ctrl">Survive. Don't let Modi Ji reach you.</div>
+        <button id="startBtn" onclick="startGame()">⚡ ENTER ⚡</button>
+    </div>
+    <audio id="bgMusic" src="audio/horror-bg.mp3" loop></audio>
+    <audio id="ghostSound1" src="audio/ghost1.mp3"></audio>
+    <audio id="ghostSound2" src="audio/ghost2.mp3"></audio>
+    <audio id="gunshotSound" src="audio/gunshot.mp3"></audio>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const miniCv = document.getElementById('minimap');
+        const mctx = miniCv.getContext('2d');
+        const staticCv = document.getElementById('staticOverlay');
+        const stCtx = staticCv.getContext('2d');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            staticCv.width = Math.floor(window.innerWidth / 4);
+            staticCv.height = Math.floor(window.innerHeight / 4);
+            staticCv.style.width = window.innerWidth + 'px';
+            staticCv.style.height = window.innerHeight + 'px';
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        const TILE = 64, MAP_W = 25, MAP_H = 25, BASE_FOV = Math.PI / 3, MAX_DEPTH = 20;
+        const PLAYER_SPEED = 2.8, TURN_SPEED = 0.035;
+
+        let map = [], enemies = [], particles = [], bloodSplats = [];
+        let player = { x: 0, y: 0, angle: 0, health: 100 };
+        let score = 0, wave = 1, gameRunning = false, gameOver = false;
+        let keys = {}, mouseDX = 0;
+        let shootCooldown = 0, recoil = 0, muzzleFlash = 0;
+        let flickerVal = 1, flickerTimer = 0;
+        let hitMarkerTimer = 0;
+        let enemySpawnTimer = 0, enemySpawnInterval = 280;
+        let isMobile = ('ontouchstart' in window);
+        let joystickDX = 0, joystickDY = 0, joystickActive = false, joystickOrigin = { x: 0, y: 0 };
+        let waveClearTimer = 0, waveClearing = false;
+        let gunCanvas = null, enemyCanvas = null, enemyCanvas2 = null, jsEnemyCanvas = null;
+        let currentFOV = BASE_FOV;
+        let isADS = false;
+        const ADS_FOV = BASE_FOV * 0.42;
+        let adsFOVCurrent = BASE_FOV, adsGunY = 0;
+        let healthKits = [];
+        const KIT_PICKUP_DIST = 55;
+        const NUM_KITS = 4;
+        let sanity = 100, bloodAlpha = 0;
+        let jsFlashAlpha = 0, jsFlashTimer = 0;
+        let staticAlpha = 0, staticTimer = 0;
+        let shakeTimer = 0, shakeAmt = 0;
+        let warningTimer = 0;
+        let fovPulseT = 0, nearestEnemyDist = Infinity, lastEnemyInView = false;
+        let breathTimer = 0, heartbeatTimer = 0;
+        let killMessages = [];
+        let totalKills = 0;
+        let ambientTimer = 0;
+        let droneGainNode = null;
+
+        let gameKeys = [];
+        let collectedKeys = 0;
+        const NUM_GAME_KEYS = 3;
+        let escaped = false;
+
+        // ── AUDIO (disabled) ──────────────────────────────────────────
+        function playShoot() {
+            const gun = document.getElementById("gunshotSound").cloneNode();
+            gun.play();
+        }
+        function playHurt() { }
+        function playKill() { }
+        function playJumpscare() { }
+        function playSpawnSound() { }
+        function playPickup() { }
+        function playHeartbeat() { }
+        function playBreathing() { }
+        function playAmbientDrone() { }
+
+        // ── DRAW MODI JI ENEMY (Caricature) ──────────────────────────
+        function makeModiEnemy(tw, th, frame) {
+            const c = document.createElement('canvas'); c.width = tw; c.height = th;
+            const x = c.getContext('2d');
+
+            // Walking bob offset
+            const bob = frame ? Math.sin(Date.now() * 0.01) * 3 : 0;
+
+            // --- Orange/saffron kurta body ---
+            x.fillStyle = '#e06000';
+            // Torso (kurta)
+            x.beginPath();
+            x.moveTo(tw * 0.3, th * 0.32);
+            x.lineTo(tw * 0.7, th * 0.32);
+            x.lineTo(tw * 0.72, th * 0.7 + bob);
+            x.lineTo(tw * 0.28, th * 0.7 + bob);
+            x.closePath(); x.fill();
+            // Nehru jacket over kurta (dark)
+            x.fillStyle = '#1a0a00';
+            x.beginPath();
+            x.moveTo(tw * 0.32, th * 0.32);
+            x.lineTo(tw * 0.68, th * 0.32);
+            x.lineTo(tw * 0.66, th * 0.58);
+            x.lineTo(tw * 0.5, th * 0.64);
+            x.lineTo(tw * 0.34, th * 0.58);
+            x.closePath(); x.fill();
+
+            // Jacket collar V shape
+            x.fillStyle = '#e06000';
+            x.beginPath();
+            x.moveTo(tw * 0.44, th * 0.32);
+            x.lineTo(tw * 0.56, th * 0.32);
+            x.lineTo(tw * 0.5, th * 0.52);
+            x.closePath(); x.fill();
+
+            // Arms
+            x.strokeStyle = '#1a0a00'; x.lineWidth = tw * 0.11; x.lineCap = 'round';
+            // Left arm (reaching forward with evil intent)
+            x.beginPath(); x.moveTo(tw * 0.32, th * 0.38); x.lineTo(tw * 0.12, th * 0.58); x.lineTo(tw * 0.08, th * 0.72 + bob); x.stroke();
+            // Right arm
+            x.beginPath(); x.moveTo(tw * 0.68, th * 0.38); x.lineTo(tw * 0.88, th * 0.58); x.lineTo(tw * 0.9, th * 0.72 + bob); x.stroke();
+
+            // Hands (slightly glowing red - demonic)
+            x.fillStyle = '#cc3300';
+            x.beginPath(); x.arc(tw * 0.08, th * 0.73 + bob, tw * 0.075, 0, Math.PI * 2); x.fill();
+            x.beginPath(); x.arc(tw * 0.9, th * 0.73 + bob, tw * 0.075, 0, Math.PI * 2); x.fill();
+            // Claws
+            x.strokeStyle = '#ff4400'; x.lineWidth = 2;
+            [-0.04, -0.01, 0.02, 0.05].forEach(o => {
+                x.beginPath(); x.moveTo(tw * 0.08 + o * tw, th * 0.76 + bob); x.lineTo(tw * 0.06 + o * tw, th * 0.82 + bob); x.stroke();
+                x.beginPath(); x.moveTo(tw * 0.9 + o * tw, th * 0.76 + bob); x.lineTo(tw * 0.88 + o * tw, th * 0.82 + bob); x.stroke();
+            });
+
+            // Legs
+            x.strokeStyle = '#cc5500'; x.lineWidth = tw * 0.1;
+            x.beginPath(); x.moveTo(tw * 0.38, th * 0.7 + bob); x.lineTo(tw * 0.33, th * 0.92); x.stroke();
+            x.beginPath(); x.moveTo(tw * 0.62, th * 0.7 + bob); x.lineTo(tw * 0.67, th * 0.92); x.stroke();
+            // Feet (sandals)
+            x.fillStyle = '#553300';
+            x.fillRect(tw * 0.24, th * 0.9, tw * 0.16, th * 0.05);
+            x.fillRect(tw * 0.6, th * 0.9, tw * 0.16, th * 0.05);
+
+            // ── HEAD ──
+            // Neck
+            x.fillStyle = '#c8956a';
+            x.beginPath(); x.ellipse(tw / 2, th * 0.28 + bob * 0.3, tw * 0.09, th * 0.06, 0, 0, Math.PI * 2); x.fill();
+
+            // Head shape (slightly elongated, caricature)
+            x.fillStyle = '#d4a57a';
+            x.beginPath(); x.ellipse(tw / 2, th * 0.19 + bob * 0.3, tw * 0.22, th * 0.17, 0, 0, Math.PI * 2); x.fill();
+
+            // ── HAIR / BEARD WHITE ──
+            // Beard (thick white Modi-style)
+            x.fillStyle = '#f0f0f0';
+            x.beginPath();
+            x.ellipse(tw / 2, th * 0.24 + bob * 0.3, tw * 0.19, th * 0.1, 0, 0, Math.PI); x.fill();
+            // Beard hairs detail
+            x.strokeStyle = '#d0d0d0'; x.lineWidth = 0.8;
+            for (let i = 0; i < 8; i++) {
+                const bx = tw * 0.33 + i * tw * 0.048;
+                x.beginPath(); x.moveTo(bx, th * 0.24 + bob * 0.3); x.lineTo(bx - 1 + Math.random() * 2, th * 0.31 + bob * 0.3); x.stroke();
+            }
+
+            // Hair on top (dark with grey streaks)
+            x.fillStyle = '#111';
+            x.beginPath();
+            x.arc(tw / 2, th * 0.14 + bob * 0.3, tw * 0.2, Math.PI, 0); x.fill();
+            // Grey streaks
+            x.strokeStyle = '#ccc'; x.lineWidth = 1.5;
+            x.beginPath(); x.moveTo(tw * 0.4, th * 0.1 + bob * 0.3); x.lineTo(tw * 0.37, th * 0.16 + bob * 0.3); x.stroke();
+            x.beginPath(); x.moveTo(tw * 0.6, th * 0.1 + bob * 0.3); x.lineTo(tw * 0.63, th * 0.16 + bob * 0.3); x.stroke();
+
+            // Mustache
+            x.fillStyle = '#fff';
+            x.beginPath(); x.ellipse(tw / 2, th * 0.195 + bob * 0.3, tw * 0.085, th * 0.028, 0, 0, Math.PI * 2); x.fill();
+
+            // ── EYES (demonic glowing red) ──
+            x.fillStyle = '#1a0000';
+            x.beginPath(); x.ellipse(tw * 0.42, th * 0.17 + bob * 0.3, tw * 0.05, th * 0.04, 0, 0, Math.PI * 2); x.fill();
+            x.beginPath(); x.ellipse(tw * 0.58, th * 0.17 + bob * 0.3, tw * 0.05, th * 0.04, 0, 0, Math.PI * 2); x.fill();
+            // Red glowing pupils
+            x.fillStyle = '#ff2200';
+            x.shadowColor = '#ff0000'; x.shadowBlur = 6;
+            x.beginPath(); x.arc(tw * 0.42, th * 0.175 + bob * 0.3, tw * 0.028, 0, Math.PI * 2); x.fill();
+            x.beginPath(); x.arc(tw * 0.58, th * 0.175 + bob * 0.3, tw * 0.028, 0, Math.PI * 2); x.fill();
+            // Glowing dot
+            x.fillStyle = '#ff8800';
+            x.beginPath(); x.arc(tw * 0.42, th * 0.172 + bob * 0.3, tw * 0.012, 0, Math.PI * 2); x.fill();
+            x.beginPath(); x.arc(tw * 0.58, th * 0.172 + bob * 0.3, tw * 0.012, 0, Math.PI * 2); x.fill();
+            x.shadowBlur = 0;
+
+            // Eyebrows (angry, furrowed)
+            x.strokeStyle = '#332200'; x.lineWidth = 2.5; x.lineCap = 'round';
+            x.beginPath(); x.moveTo(tw * 0.37, th * 0.145 + bob * 0.3); x.lineTo(tw * 0.47, th * 0.155 + bob * 0.3); x.stroke();
+            x.beginPath(); x.moveTo(tw * 0.63, th * 0.145 + bob * 0.3); x.lineTo(tw * 0.53, th * 0.155 + bob * 0.3); x.stroke();
+
+            // Nose (bulbous)
+            x.fillStyle = '#c07055';
+            x.beginPath(); x.ellipse(tw * 0.5, th * 0.192 + bob * 0.3, tw * 0.038, th * 0.028, 0, 0, Math.PI * 2); x.fill();
+
+            // ── GANDHI TOPI hat ──
+            x.fillStyle = '#ffffff';
+            x.beginPath();
+            x.ellipse(tw * 0.5, th * 0.11 + bob * 0.3, tw * 0.21, th * 0.04, 0, 0, Math.PI * 2); x.fill();
+            x.fillRect(tw * 0.33, th * 0.07 + bob * 0.3, tw * 0.34, th * 0.045);
+            x.beginPath(); x.ellipse(tw * 0.5, th * 0.07 + bob * 0.3, tw * 0.17, th * 0.03, 0, 0, Math.PI * 2); x.fill();
+
+            // Blood dripping from hands (horror touch)
+            x.strokeStyle = 'rgba(200,0,0,0.8)'; x.lineWidth = 1.5;
+            [0.04, 0.07, 0.1].forEach((dt, i) => {
+                x.beginPath(); x.moveTo(tw * 0.08, th * 0.77 + bob); x.lineTo(tw * (0.06 + dt), th * 0.85 + bob); x.stroke();
+                x.beginPath(); x.moveTo(tw * 0.9, th * 0.77 + bob); x.lineTo(tw * (0.88 + dt), th * 0.85 + bob); x.stroke();
+            });
+
+            return c;
+        }
+
+        // ── JUMPSCARE CANVAS ──
+        function makeJumpscareImage() {
+            const c = document.getElementById('jsCanvas');
+            const x = c.getContext('2d');
+            x.fillStyle = '#000'; x.fillRect(0, 0, 400, 400);
+            // Draw big, scary close-up Modi face
+            const e = makeModiEnemy(400, 400, false);
+            // Scale and distort for horror
+            x.save();
+            x.filter = 'contrast(200%) brightness(50%) saturate(300%)';
+            x.drawImage(e, 0, 0, 400, 400);
+            x.restore();
+            // Red vignette
+            const v = x.createRadialGradient(200, 200, 50, 200, 200, 220);
+            v.addColorStop(0, 'rgba(0,0,0,0)');
+            v.addColorStop(1, 'rgba(255,0,0,0.8)');
+            x.fillStyle = v; x.fillRect(0, 0, 400, 400);
+            // Add glitch lines
+            for (let i = 0; i < 20; i++) {
+                const gy = Math.random() * 400;
+                x.fillStyle = `rgba(255,${Math.random() > 0.5 ? 100 : 0},0,${Math.random() * 0.5})`;
+                x.fillRect(0, gy, 400, 2 + Math.random() * 6);
+            }
+            x.fillStyle = 'rgba(255,0,0,0.5)';
+            x.font = 'bold 28px monospace'; x.textAlign = 'center';
+            x.fillText('HE IS COMING FOR YOU', 200, 380);
+        }
+
+        const crossCv = document.getElementById('crosshair'), crossX = crossCv.getContext('2d');
+        (function drawCross() {
+            crossX.clearRect(0, 0, 32, 32);
+            const cx = 16, cy = 16, gap = 5, len = 7;
+            // Orange glow crosshair
+            crossX.shadowColor = 'rgba(255,100,0,0.9)'; crossX.shadowBlur = 6;
+            crossX.strokeStyle = 'rgba(0,0,0,0.6)'; crossX.lineWidth = 3;
+            [[cx, cy - gap, cx, cy - gap - len], [cx, cy + gap, cx, cy + gap + len], [cx - gap, cy, cx - gap - len, cy], [cx + gap, cy, cx + gap + len, cy]].forEach(([x1, y1, x2, y2]) => {
+                crossX.beginPath(); crossX.moveTo(x1, y1); crossX.lineTo(x2, y2); crossX.stroke();
+            });
+            crossX.strokeStyle = 'rgba(255,160,0,0.95)'; crossX.lineWidth = 1.5;
+            [[cx, cy - gap, cx, cy - gap - len], [cx, cy + gap, cx, cy + gap + len], [cx - gap, cy, cx - gap - len, cy], [cx + gap, cy, cx + gap + len, cy]].forEach(([x1, y1, x2, y2]) => {
+                crossX.beginPath(); crossX.moveTo(x1, y1); crossX.lineTo(x2, y2); crossX.stroke();
+            });
+            crossX.fillStyle = 'rgba(255,60,0,1)';
+            crossX.beginPath(); crossX.arc(cx, cy, 2, 0, Math.PI * 2); crossX.fill();
+            crossX.shadowBlur = 0;
+        })();
+
+        // ── MAP ──
+        function generateMap() {
+            const layout = [
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 2, 2, 2, 2, 2, 2, 2, 1, 5, 5, 5, 5, 5, 5, 5, 1, 6, 6, 6, 6, 6, 6, 6, 1],
+                [1, 2, 0, 0, 0, 0, 0, 2, 1, 5, 0, 0, 0, 0, 0, 5, 1, 6, 0, 0, 0, 0, 0, 6, 1],
+                [1, 2, 0, 8, 8, 8, 0, 11, 0, 11, 0, 0, 0, 0, 0, 11, 0, 11, 0, 0, 0, 0, 0, 6, 1],
+                [1, 2, 0, 0, 0, 0, 0, 2, 1, 5, 0, 0, 0, 0, 0, 5, 1, 6, 0, 0, 0, 0, 0, 6, 1],
+                [1, 2, 2, 2, 11, 2, 2, 2, 1, 5, 5, 5, 11, 5, 5, 5, 1, 6, 6, 6, 11, 6, 6, 6, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 4, 4, 0, 4, 4, 0, 0, 0, 3, 3, 0, 3, 3, 0, 0, 0, 4, 4, 0, 4, 4, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 3, 3, 3, 11, 3, 3, 3, 1, 7, 7, 7, 11, 7, 7, 7, 1, 2, 2, 2, 11, 2, 2, 2, 1],
+                [1, 3, 0, 0, 0, 0, 0, 3, 1, 7, 0, 0, 0, 0, 0, 7, 1, 2, 0, 0, 0, 0, 0, 2, 1],
+                [1, 3, 0, 3, 3, 3, 0, 11, 0, 11, 0, 8, 8, 8, 0, 11, 0, 11, 0, 8, 8, 8, 0, 2, 1],
+                [1, 3, 0, 0, 0, 0, 0, 3, 1, 7, 0, 0, 0, 0, 0, 7, 1, 2, 0, 0, 0, 0, 0, 2, 1],
+                [1, 3, 3, 3, 11, 3, 3, 3, 1, 7, 7, 7, 11, 7, 7, 7, 1, 2, 2, 2, 11, 2, 2, 2, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12],
+                [1, 0, 3, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 3, 0, 0, 0, 3, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 5, 5, 5, 11, 5, 5, 5, 1, 6, 6, 6, 11, 6, 6, 6, 1, 2, 2, 2, 11, 2, 2, 2, 1],
+                [1, 5, 0, 0, 0, 0, 0, 5, 1, 6, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 2, 1],
+                [1, 5, 0, 5, 5, 5, 0, 11, 0, 11, 0, 9, 9, 9, 0, 11, 0, 11, 0, 8, 0, 8, 0, 2, 1],
+                [1, 5, 0, 0, 0, 0, 0, 5, 1, 6, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 2, 1],
+                [1, 5, 5, 5, 5, 5, 5, 5, 1, 6, 6, 6, 6, 6, 6, 6, 1, 2, 2, 2, 2, 2, 2, 2, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+            ];
+            map = [];
+            for (let y = 0; y < MAP_H; y++) map[y] = [...layout[y]];
+        }
+
+        function findOpen() {
+            let x, y;
+            do { x = 1 + Math.floor(Math.random() * (MAP_W - 2)); y = 1 + Math.floor(Math.random() * (MAP_H - 2)); }
+            while (map[y][x] !== 0);
+            return { x: x * TILE + TILE / 2, y: y * TILE + TILE / 2 };
+        }
+
+        // Find an open spot that is specifically in a hallway (0) and NOT in a room or doorway
+        function findOpenHallway() {
+            let x, y;
+            let attempts = 0;
+            do {
+                attempts++;
+                x = 1 + Math.floor(Math.random() * (MAP_W - 2));
+                y = 1 + Math.floor(Math.random() * (MAP_H - 2));
+            }
+            // type 0 = hallway, but to be sure we're in open space, we check surroundings too.
+            // Simplified: we'll just check if it's 0 and hope it's mostly hallways, 
+            // but we can also check if it's not a doorway adjacent block if needed.
+            while (map[y][x] !== 0 && attempts < 1000);
+            return { x: x * TILE + TILE / 2, y: y * TILE + TILE / 2 };
+        }
+
+        function isWall(wx, wy) {
+            const mx = Math.floor(wx / TILE), my = Math.floor(wy / TILE);
+            if (mx < 0 || mx >= MAP_W || my < 0 || my >= MAP_H) return true;
+            return map[my][mx] >= 1;
+        }
+
+        // ── INIT ──
+        function initGame() {
+            generateMap();
+            const s = findOpen();
+            player = { x: s.x, y: s.y, angle: 0, health: 100 };
+            enemies = []; particles = []; bloodSplats = [];
+            score = 0; wave = 1; gameOver = false; sanity = 100;
+            escaped = false;
+            shootCooldown = 0; recoil = 0; muzzleFlash = 0;
+            enemySpawnTimer = 0; enemySpawnInterval = 280;
+            waveClearing = false; waveClearTimer = 0;
+            bloodAlpha = 0; jsFlashAlpha = 0; jsFlashTimer = 0;
+            staticAlpha = 0; staticTimer = 0; shakeTimer = 0;
+            currentFOV = BASE_FOV; fovPulseT = 0;
+            isADS = false; adsFOVCurrent = BASE_FOV; adsGunY = 0;
+            nearestEnemyDist = Infinity; lastEnemyInView = false;
+            breathTimer = 0; heartbeatTimer = 0; totalKills = 0;
+            killMessages = []; ambientTimer = 0;
+            collectedKeys = 0;
+
+            gunCanvas = makeGun(400, 400);
+            enemyCanvas = makeModiEnemy(64, 128, false);
+            enemyCanvas2 = makeModiEnemy(64, 128, true);
+            makeJumpscareImage();
+            spawnEnemies(3 + wave);
+            spawnHealthKits();
+            spawnGameKeys();
+            updateHUD();
+        }
+
+        // ── ENEMY SPAWN ──
+        function spawnEnemies(count) {
+            for (let i = 0; i < count; i++) {
+                let pos, att = 0;
+                do { pos = findOpen(); att++; } while (dst(pos.x, pos.y, player.x, player.y) < 5 * TILE && att < 50);
+                enemies.push({
+                    x: pos.x, y: pos.y, health: 2, alive: true,
+                    alertRange: (8 + wave * 0.5) * TILE,
+                    speed: 0.55 + wave * 0.09 + Math.random() * 0.2,
+                    spawnFlash: 1.5,
+                    walkT: Math.random() * Math.PI * 2,
+                    screamTimer: 0,
+                    hasScreamed: false
+                });
+                setTimeout(() => { if (gameRunning) playSpawnSound(); }, i * 150);
+            }
+        }
+
+        function spawnHealthKits() {
+            healthKits = [];
+            const minSpread = 8 * TILE;
+            let attempts = 0;
+            while (healthKits.length < NUM_KITS && attempts < 300) {
+                attempts++;
+                const pos = findOpen();
+                if (dst(pos.x, pos.y, player.x, player.y) < minSpread) continue;
+                if (healthKits.some(k => dst(k.x, k.y, pos.x, pos.y) < minSpread)) continue;
+                healthKits.push({ x: pos.x, y: pos.y, bobT: Math.random() * Math.PI * 2, alive: true });
+            }
+        }
+
+        function spawnGameKeys() {
+            gameKeys = [];
+            const minSpread = 8 * TILE;
+            let attempts = 0;
+            // Define hallways as open spaces completely surrounded by other open spaces (at least 2 directions) or specific hallway sections
+            while (gameKeys.length < NUM_GAME_KEYS && attempts < 500) {
+                attempts++;
+                let tx = 1 + Math.floor(Math.random() * (MAP_W - 2));
+                let ty = 1 + Math.floor(Math.random() * (MAP_H - 2));
+
+                if (map[ty][tx] !== 0) continue;
+
+                // Ensure it's not nestled in a single-tile room interior by checking if at least two neighbors are open
+                let openNeighbors = 0;
+                if (map[ty - 1][tx] === 0) openNeighbors++;
+                if (map[ty + 1][tx] === 0) openNeighbors++;
+                if (map[ty][tx - 1] === 0) openNeighbors++;
+                if (map[ty][tx + 1] === 0) openNeighbors++;
+
+                if (openNeighbors < 2) continue; // Likely a small nook or entry point
+
+                let pos = { x: tx * TILE + TILE / 2, y: ty * TILE + TILE / 2 };
+
+                if (dst(pos.x, pos.y, player.x, player.y) < minSpread) continue;
+                if (gameKeys.some(k => dst(k.x, k.y, pos.x, pos.y) < minSpread)) continue;
+                gameKeys.push({ x: pos.x, y: pos.y, bobT: Math.random() * Math.PI * 2, alive: true });
+            }
+        }
+
+        function castRay(angle) {
+            const ca = Math.cos(angle), sa = Math.sin(angle);
+            let d = 0;
+            while (d < MAX_DEPTH * TILE) {
+                d += 1;
+                const wx = player.x + ca * d, wy = player.y + sa * d;
+                if (isWall(wx, wy)) {
+                    const mx = Math.floor(wx / TILE), my = Math.floor(wy / TILE);
+                    const type = (mx >= 0 && mx < MAP_W && my >= 0 && my < MAP_H) ? map[my][mx] : 1;
+                    const mx_px = mx * TILE, my_px = my * TILE;
+                    const dx2 = wx - (mx_px + TILE / 2), dy2 = wy - (my_px + TILE / 2);
+                    // Wall texture coord
+                    const hit = Math.abs(dx2) < Math.abs(dy2) ? ((wx % TILE) / TILE) : ((wy % TILE) / TILE);
+                    return { dist: d, side: Math.abs(dx2) < Math.abs(dy2) ? 0 : 1, tex: hit, type: type };
+                }
+            }
+            return { dist: MAX_DEPTH * TILE, side: 0, tex: 0, type: 1 };
+        }
+
+        // ── RENDER ENEMIES ──
+        function renderEnemies(zBuf) {
+            const alive = enemies.filter(e => e.alive);
+            alive.sort((a, b) => dst(b.x, b.y, player.x, player.y) - dst(a.x, a.y, player.x, player.y));
+            let anyVis = false;
+            nearestEnemyDist = Infinity;
+
+            for (const e of alive) {
+                const dx = e.x - player.x, dy = e.y - player.y;
+                const d = Math.sqrt(dx * dx + dy * dy);
+                if (d < 1) continue;
+                nearestEnemyDist = Math.min(nearestEnemyDist, d);
+
+                let ang = Math.atan2(dy, dx) - player.angle;
+                while (ang < -Math.PI) ang += Math.PI * 2; while (ang > Math.PI) ang -= Math.PI * 2;
+                if (Math.abs(ang) > currentFOV / 2 + 0.35) continue;
+
+                const W = canvas.width, H = canvas.height;
+                const sx2 = (0.5 + ang / currentFOV) * W;
+                const sprH = Math.min(H, (TILE / d) * (H * 0.95));
+                const sprW = sprH * 0.58;
+                const sx = sx2 - sprW / 2, sy = H / 2 - sprH / 2;
+                const fog = Math.max(0, 1 - d / (MAX_DEPTH * TILE * 0.55));
+                if (fog < 0.04) continue;
+
+                const cc = Math.floor(sx2);
+                if (cc >= 0 && cc < zBuf.length && zBuf[cc] < d) continue;
+
+                anyVis = true;
+                ctx.save();
+
+                e.walkT += 0.08;
+                const useCanvas = Math.sin(e.walkT) > 0 ? enemyCanvas : enemyCanvas2;
+
+                if (e.spawnFlash > 0) {
+                    const sf = Math.min(1, e.spawnFlash);
+                    ctx.globalAlpha = sf * fog;
+                    ctx.shadowColor = 'rgba(255,100,0,1)'; ctx.shadowBlur = sprW * sf * 2;
+                    e.spawnFlash -= 0.03;
+                } else {
+                    ctx.globalAlpha = fog * flickerVal;
+                }
+
+                // Low sanity: enemies appear distorted
+                if (sanity < 30) {
+                    ctx.filter = `hue-rotate(${Math.sin(Date.now() * 0.003) * 20}deg) saturate(${150 + Math.sin(Date.now() * 0.005) * 80}%)`;
+                }
+
+                ctx.drawImage(useCanvas, sx, sy, sprW, sprH);
+                ctx.filter = 'none';
+                ctx.shadowBlur = 0;
+
+                // Evil red eye glow
+                const eyeI = Math.min(1, fog * 1.6 + (1 - Math.min(1, d / (4 * TILE))) * 0.7);
+                ctx.globalAlpha = Math.max(0, eyeI);
+                ctx.shadowColor = '#ff2200'; ctx.shadowBlur = sprW * 0.35;
+                ctx.fillStyle = `rgba(255,30,0,${eyeI})`;
+                ctx.beginPath(); ctx.arc(sx + sprW * 0.38, sy + sprH * 0.175, sprW * 0.06, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(sx + sprW * 0.62, sy + sprH * 0.175, sprW * 0.06, 0, Math.PI * 2); ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Health bar for stronger enemies
+                if (e.health > 1) {
+                    const bw = sprW * 0.8, bh = 4;
+                    const bx = sx + sprW * 0.1, by = sy - 8;
+                    ctx.globalAlpha = fog * 0.9;
+                    ctx.fillStyle = '#330000'; ctx.fillRect(bx, by, bw, bh);
+                    ctx.fillStyle = '#ff3300'; ctx.fillRect(bx, by, bw * (e.health / 3), bh);
+                }
+
+                ctx.restore();
+            }
+
+            if (anyVis && !lastEnemyInView && nearestEnemyDist < 7 * TILE) {
+                triggerEnemyViewScare();
+            }
+            lastEnemyInView = anyVis;
+        }
+
+        // ── BLOOD SPLAT SYSTEM ──
+        function spawnBloodSplat(wx, wy) {
+            for (let i = 0; i < 8; i++) {
+                bloodSplats.push({
+                    x: wx + (Math.random() - 0.5) * TILE * 0.5,
+                    y: wy + (Math.random() - 0.5) * TILE * 0.5,
+                    r: (8 + Math.random() * 16),
+                    alpha: 0.7 + Math.random() * 0.3
+                });
+            }
+            if (bloodSplats.length > 60) bloodSplats.splice(0, 8);
+        }
+
+        function renderBloodSplats(zBuf) {
+            for (const b of bloodSplats) {
+                const dx = b.x - player.x, dy = b.y - player.y;
+                const d = Math.sqrt(dx * dx + dy * dy);
+                if (d < 1 || d > MAX_DEPTH * TILE * 0.5) continue;
+                let ang = Math.atan2(dy, dx) - player.angle;
+                while (ang < -Math.PI) ang += Math.PI * 2; while (ang > Math.PI) ang -= Math.PI * 2;
+                if (Math.abs(ang) > currentFOV / 2 + 0.2) continue;
+                const W = canvas.width, H = canvas.height;
+                const sx = (0.5 + ang / currentFOV) * W;
+                const col = Math.floor(sx);
+                if (col < 0 || col >= zBuf.length || zBuf[col] < d) continue;
+                const sz = Math.max(2, Math.min(30, (TILE / d) * b.r * 0.3));
+                const fog = Math.max(0, 1 - d / (MAX_DEPTH * TILE * 0.5));
+                ctx.save();
+                ctx.globalAlpha = b.alpha * fog;
+                ctx.fillStyle = '#8b0000';
+                ctx.beginPath(); ctx.arc(sx, H / 2 + sz * 0.5, sz / 2, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // ── PARTICLES ──
+        function spawnParticles(x, y, ang) {
+            for (let i = 0; i < 30; i++) {
+                const a = ang + (Math.random() - 0.5) * Math.PI, spd = 1.5 + Math.random() * 4;
+                particles.push({
+                    x, y, vx: Math.cos(a) * spd, vy: Math.sin(a) * spd,
+                    life: 1, decay: 0.03 + Math.random() * 0.04,
+                    sz: 3 + Math.random() * 6,
+                    col: `hsl(${Math.random() * 20},90%,${30 + Math.random() * 25}%)`
+                });
+            }
+        }
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx; p.y += p.vy; p.life -= p.decay; p.vy += 0.1;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+        }
+        function drawParticles(zBuf) {
+            for (const p of particles) {
+                const dx = p.x - player.x, dy = p.y - player.y;
+                const d = Math.sqrt(dx * dx + dy * dy); if (d < 1) continue;
+                let a = Math.atan2(dy, dx) - player.angle;
+                while (a < -Math.PI) a += Math.PI * 2; while (a > Math.PI) a -= Math.PI * 2;
+                if (Math.abs(a) > currentFOV / 2 + 0.2) continue;
+                const W = canvas.width, H = canvas.height;
+                const sx = (0.5 + a / currentFOV) * W;
+                const col = Math.floor(sx);
+                if (col < 0 || col >= zBuf.length || zBuf[col] < d) continue;
+                const sz = Math.max(2, (TILE / d) * 4 * p.life);
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.col;
+                ctx.fillRect(sx - sz / 2, H / 2 + (TILE / d) * 20 - sz / 2, sz, sz);
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        // ── HEALTH KITS ──
+        function renderHealthKits(zBuf) {
+            for (const k of healthKits) {
+                if (!k.alive) continue;
+                k.bobT += 0.05;
+                const dx = k.x - player.x, dy = k.y - player.y;
+                const d = Math.sqrt(dx * dx + dy * dy);
+                if (d < 1) continue;
+                let ang = Math.atan2(dy, dx) - player.angle;
+                while (ang < -Math.PI) ang += Math.PI * 2; while (ang > Math.PI) ang -= Math.PI * 2;
+                if (Math.abs(ang) > currentFOV / 2 + 0.3) continue;
+                const W = canvas.width, H = canvas.height;
+                const scrX = (0.5 + ang / currentFOV) * W;
+                const cc = Math.floor(scrX);
+                if (cc >= 0 && cc < zBuf.length && zBuf[cc] < d) continue;
+                const fog = Math.max(0, 1 - d / (MAX_DEPTH * TILE * 0.6));
+                if (fog < 0.04) continue;
+                const sz = Math.max(8, Math.min(60, (TILE / d) * 28));
+                const bob = Math.sin(k.bobT) * 5;
+                const kitY = H / 2 - sz / 2 + bob;
+                ctx.save();
+                ctx.globalAlpha = fog * 0.95;
+                ctx.shadowColor = '#00ff88'; ctx.shadowBlur = sz * 0.7;
+                ctx.fillStyle = '#eee'; ctx.fillRect(scrX - sz / 2, kitY, sz, sz);
+                ctx.fillStyle = '#cc0000';
+                const t = sz * 0.28, mid3 = sz * 0.35;
+                ctx.fillRect(scrX - sz / 2 + mid3, kitY + t, sz - mid3 * 2, sz - t * 2);
+                ctx.fillRect(scrX - sz / 2 + t, kitY + mid3, sz - t * 2, sz - mid3 * 2);
+                ctx.shadowBlur = 0;
+                if (d < 3 * TILE) {
+                    ctx.globalAlpha = 0.9; ctx.fillStyle = '#00ff88';
+                    ctx.font = `bold ${Math.max(11, Math.floor(sz * 0.38))}px monospace`;
+                    ctx.textAlign = 'center'; ctx.fillText('[E] +35 HP', scrX, kitY - 7);
+                }
+                ctx.restore();
+            }
+        }
+
+        // Render keys
+        function renderGameKeys(zBuf) {
+            for (const k of gameKeys) {
+                if (!k.alive) continue;
+                k.bobT += 0.05;
+                const dx = k.x - player.x, dy = k.y - player.y;
+                const d = Math.sqrt(dx * dx + dy * dy);
+                if (d < 1) continue;
+                let ang = Math.atan2(dy, dx) - player.angle;
+                while (ang < -Math.PI) ang += Math.PI * 2; while (ang > Math.PI) ang -= Math.PI * 2;
+                if (Math.abs(ang) > currentFOV / 2 + 0.3) continue;
+                const W = canvas.width, H = canvas.height;
+                const scrX = (0.5 + ang / currentFOV) * W;
+                const cc = Math.floor(scrX);
+                if (cc >= 0 && cc < zBuf.length && zBuf[cc] < d) continue;
+                const fog = Math.max(0, 1 - d / (MAX_DEPTH * TILE * 0.6));
+                if (fog < 0.04) continue;
+                const sz = Math.max(6, Math.min(50, (TILE / d) * 20));
+                const bob = Math.sin(k.bobT) * 5;
+                const kitY = H / 2 - sz / 2 + bob + 10;
+                ctx.save();
+                ctx.globalAlpha = fog * 0.95;
+                ctx.shadowColor = '#ffff00'; ctx.shadowBlur = sz * 0.8;
+                ctx.fillStyle = '#ffcc00';
+
+                ctx.beginPath(); ctx.arc(scrX - sz * 0.3, kitY, sz * 0.3, 0, Math.PI * 2); ctx.fill();
+                ctx.fillRect(scrX - sz * 0.1, kitY - sz * 0.1, sz * 0.6, sz * 0.2);
+                ctx.fillRect(scrX + sz * 0.3, kitY, sz * 0.15, sz * 0.3);
+                ctx.fillRect(scrX + sz * 0.1, kitY, sz * 0.15, sz * 0.3);
+
+                ctx.shadowBlur = 0;
+                if (d < 3 * TILE) {
+                    ctx.globalAlpha = 0.9; ctx.fillStyle = '#ffff00';
+                    ctx.font = `bold ${Math.max(11, Math.floor(sz * 0.5))}px monospace`;
+                    ctx.textAlign = 'center'; ctx.fillText('[E] PICK UP KEY', scrX, kitY - 15);
+                }
+                ctx.restore();
+            }
+        }
+
+        function tryInteract() {
+            // Pick up health kits
+            for (const k of healthKits) {
+                if (!k.alive) continue;
+                if (dst(k.x, k.y, player.x, player.y) < KIT_PICKUP_DIST * 2) {
+                    k.alive = false;
+                    player.health = Math.min(100, player.health + 35);
+                    playPickup(); updateHUD();
+                    bloodAlpha = 0;
+                    document.getElementById('bloodOverlay').style.background = 'radial-gradient(ellipse at center,transparent 35%,rgba(0,180,80,0.5) 100%)';
+                    setTimeout(() => { document.getElementById('bloodOverlay').style.background = 'radial-gradient(ellipse at center,transparent 30%,rgba(160,0,0,0.85) 100%)'; }, 500);
+                    return;
+                }
+            }
+
+            // Pick up game keys
+            for (const k of gameKeys) {
+                if (!k.alive) continue;
+                if (dst(k.x, k.y, player.x, player.y) < KIT_PICKUP_DIST * 2) {
+                    k.alive = false;
+                    collectedKeys++;
+                    playPickup(); updateHUD();
+                    return;
+                }
+            }
+
+            // Interact with doors
+            const ca = Math.cos(player.angle), sa = Math.sin(player.angle);
+            const interactDist = TILE * 1.5;
+            for (let d = 0; d < interactDist; d += 5) {
+                const wx = player.x + ca * d, wy = player.y + sa * d;
+                const mx = Math.floor(wx / TILE), my = Math.floor(wy / TILE);
+                if (mx >= 0 && mx < MAP_W && my >= 0 && my < MAP_H) {
+                    const type = map[my][mx];
+                    if (type === 11) {
+                        map[my][mx] = 0;
+                        return;
+                    } else if (type === 12) {
+                        if (collectedKeys >= NUM_GAME_KEYS) {
+                            triggerWin();
+                        } else {
+                            warningTimer = 60;
+                            document.getElementById('warningText').style.color = "#ffcc00";
+                            document.getElementById('warningText').style.textShadow = "0 0 20px #ffcc00";
+                            document.getElementById('warningText').textContent = "FIND 3 KEYS TO ESCAPE";
+                            setTimeout(() => {
+                                document.getElementById('warningText').style.color = "#ff0000";
+                                document.getElementById('warningText').style.textShadow = "0 0 30px #f00, 0 0 70px #800";
+                            }, 1000);
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+
+        // ── SHOOT ──
+        function shoot() {
+            if (!gameRunning || gameOver || shootCooldown > 0) return;
+            shootCooldown = isADS ? 11 : 16;
+            recoil = isADS ? 7 : 14;
+            muzzleFlash = 7;
+            playShoot();
+
+            const ca = Math.cos(player.angle), sa = Math.sin(player.angle);
+            const hitThreshold = isADS ? 0.988 : 0.93;
+            let best = null, bestD = Infinity;
+            for (const e of enemies) {
+                if (!e.alive) continue;
+                const dx = e.x - player.x, dy = e.y - player.y;
+                const d = Math.sqrt(dx * dx + dy * dy);
+                if (d > MAX_DEPTH * TILE) continue;
+                if ((dx / d) * ca + (dy / d) * sa < hitThreshold) continue;
+                const { dist: wd } = castRay(player.angle);
+                if (wd < d) continue;
+                if (d < bestD) { bestD = d; best = e; }
+            }
+            if (best) {
+                best.health--;
+                if (best.health <= 0) {
+                    best.alive = false; score += 150; totalKills++;
+                    playKill();
+                    spawnParticles(best.x, best.y, Math.atan2(player.y - best.y, player.x - best.x));
+                    spawnBloodSplat(best.x, best.y);
+                    addKillMessage();
+                    hitMarkerTimer = 22;
+                    document.getElementById('hitMarker').style.opacity = '1';
+                    updateHUD();
+                } else {
+                    // Hit but not dead - flash
+                    best.spawnFlash = 0.5;
+                    hitMarkerTimer = 12;
+                    document.getElementById('hitMarker').style.opacity = '0.6';
+                    score += 25; updateHUD();
+                }
+            }
+        }
+
+        function addKillMessage() {
+            const msgs = [
+                'MODI JI ELIMINATED', 'NAMO DELETED', '404: MODI NOT FOUND',
+                'ABKI BAAR... GAME OVER', 'ACCHE DIN = DEAD',
+                'VIKAS NEUTRALIZED', 'MANN KI BAAT: NOTHING'
+            ];
+            const msg = msgs[Math.floor(Math.random() * msgs.length)];
+            const el = document.createElement('div');
+            el.className = 'killMsg'; el.textContent = msg;
+            document.getElementById('killFeed').appendChild(el);
+            setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 1000); }, 2500);
+        }
+
+        // ── PLAYER MOVE ──
+        function makeGun(w, h) {
+            const c = document.createElement('canvas'); c.width = w; c.height = h;
+            const g = c.getContext('2d');
+            const DM = '#0d0d0d', MM = '#1a1a1a', LM = '#2a2a2a';
+            const SK = '#c8956a', SKD = '#9a6040';
+            function poly(pts, col) {
+                g.fillStyle = col; g.beginPath();
+                g.moveTo(pts[0], pts[1]);
+                for (let i = 2; i < pts.length; i += 2) g.lineTo(pts[i], pts[i + 1]);
+                g.closePath(); g.fill();
+            }
+            const cx = w * 0.5;
+            poly([cx - 75, h, cx - 62, h * 0.68, cx - 18, h * 0.62, cx + 12, h * 0.84, cx, h], SK);
+            poly([cx - 28, h * 0.68, cx - 8, h * 0.58, cx + 18, h * 0.63, cx + 6, h * 0.74], SK);
+            poly([cx + 72, h, cx + 52, h * 0.63, cx, h * 0.68, cx + 12, h], SK);
+            poly([cx - 38, h * 0.54, cx + 38, h * 0.54, cx + 32, h * 0.74, cx - 32, h * 0.74], DM);
+            poly([cx - 16, h * 0.33, cx + 16, h * 0.33, cx + 38, h * 0.54, cx - 38, h * 0.54], MM);
+            poly([cx - 8, h * 0.33, cx + 8, h * 0.33, cx + 16, h * 0.54, cx - 16, h * 0.54], LM);
+            poly([cx - 6, h * 0.36, cx + 6, h * 0.36, cx + 8, h * 0.41, cx - 8, h * 0.41], '#000');
+            poly([cx - 3, h * 0.3, cx + 3, h * 0.3, cx + 4, h * 0.33, cx - 4, h * 0.33], DM);
+            poly([cx - 38, h * 0.47, cx - 12, h * 0.47, cx - 10, h * 0.54, cx - 38, h * 0.54], DM);
+            poly([cx + 38, h * 0.47, cx + 12, h * 0.47, cx + 10, h * 0.54, cx + 38, h * 0.54], DM);
+            g.strokeStyle = SKD; g.lineWidth = 6; g.lineCap = 'round';
+            g.beginPath(); g.moveTo(cx + 38, h * 0.64); g.lineTo(cx - 16, h * 0.67); g.stroke();
+            g.beginPath(); g.moveTo(cx + 40, h * 0.74); g.lineTo(cx - 10, h * 0.77); g.stroke();
+            g.beginPath(); g.moveTo(cx + 42, h * 0.84); g.lineTo(cx - 5, h * 0.87); g.stroke();
+            // Tactical orange stripe
+            g.strokeStyle = 'rgba(255,120,0,0.6)'; g.lineWidth = 2;
+            g.beginPath(); g.moveTo(cx - 35, h * 0.5); g.lineTo(cx + 35, h * 0.5); g.stroke();
+            const sh = g.createLinearGradient(0, h * 0.78, 0, h);
+            sh.addColorStop(0, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,0.65)');
+            g.fillStyle = sh; g.fillRect(0, h * 0.78, w, h * 0.22);
+            return c;
+        }
+        function playJumpscare() {
+
+            const bg = document.getElementById("bgMusic");
+            const sound1 = document.getElementById("ghostSound1");
+            const sound2 = document.getElementById("ghostSound2");
+
+            bg.volume = 0.1;
+
+            if (Math.random() < 0.5) {
+                sound1.play();
+            } else {
+                sound2.play();
+            }
+
+            setTimeout(() => {
+                bg.volume = 0.4;
+            }, 3000);
+        }
+
+        function movePlayer() {
+            let dx = 0, dy = 0;
+            if (isMobile) {
+                dx = Math.cos(player.angle) * (-joystickDY) * PLAYER_SPEED + Math.cos(player.angle + Math.PI / 2) * joystickDX * PLAYER_SPEED;
+                dy = Math.sin(player.angle) * (-joystickDY) * PLAYER_SPEED + Math.sin(player.angle + Math.PI / 2) * joystickDX * PLAYER_SPEED;
+            } else {
+                if (keys['w'] || keys['arrowup']) { dx += Math.cos(player.angle) * PLAYER_SPEED; dy += Math.sin(player.angle) * PLAYER_SPEED; }
+                if (keys['s'] || keys['arrowdown']) { dx -= Math.cos(player.angle) * PLAYER_SPEED; dy -= Math.sin(player.angle) * PLAYER_SPEED; }
+                if (keys['a']) { dx += Math.cos(player.angle - Math.PI / 2) * PLAYER_SPEED; dy += Math.sin(player.angle - Math.PI / 2) * PLAYER_SPEED; }
+                if (keys['d']) { dx += Math.cos(player.angle + Math.PI / 2) * PLAYER_SPEED; dy += Math.sin(player.angle + Math.PI / 2) * PLAYER_SPEED; }
+                if (keys['arrowleft']) player.angle -= TURN_SPEED;
+                if (keys['arrowright']) player.angle += TURN_SPEED;
+            }
+            player.angle += mouseDX * 0.003; mouseDX = 0;
+
+            const targetFOV = isADS ? ADS_FOV : BASE_FOV;
+            adsFOVCurrent += (targetFOV - adsFOVCurrent) * 0.18;
+            currentFOV = adsFOVCurrent;
+
+            const targetGunY = isADS ? -65 : 0;
+            adsGunY += (targetGunY - adsGunY) * 0.18;
+
+            const m = 13;
+            if (!isWall(player.x + dx + Math.sign(dx) * m, player.y)) player.x += dx;
+            if (!isWall(player.x, player.y + dy + Math.sign(dy) * m)) player.y += dy;
+        }
+
+        // ── ENEMY AI ──
+        function updateEnemies() {
+            for (const e of enemies) {
+                if (!e.alive) continue;
+                const dx = player.x - e.x, dy = player.y - e.y;
+                const d = Math.sqrt(dx * dx + dy * dy);
+
+                // Scream when first detecting player
+                if (d < e.alertRange && !e.hasScreamed) {
+                    e.hasScreamed = true;
+                    setTimeout(() => {
+                        if (gameRunning && e.alive) {
+                            playSpawnSound();
+                            shakeTimer = 8; shakeAmt = 3;
+                        }
+                    }, 200);
+                }
+
+                if (d < e.alertRange) {
+                    const spd = d < 3 * TILE ? e.speed * 1.35 : e.speed; // Sprint when close!
+                    e.x += (dx / d) * spd; e.y += (dy / d) * spd;
+                    if (d < 22) {
+                        const dmg = 0.28 + wave * 0.04;
+                        player.health -= dmg;
+                        bloodAlpha = Math.min(1, bloodAlpha + 0.16);
+                        if (player.health <= 0) { player.health = 0; triggerGameOver(); }
+                        updateHUD();
+                        if (Math.random() < 0.07) playHurt();
+                    }
+                }
+            }
+
+            enemySpawnTimer++;
+            if (enemySpawnTimer >= enemySpawnInterval) {
+                enemySpawnTimer = 0;
+                spawnEnemies(1 + Math.floor(wave / 2));
+                enemySpawnInterval = Math.max(100, enemySpawnInterval - 18);
+                // Spawn scare
+                if (Math.random() < 0.4) {
+                    warningTimer = 80;
+                    const msgs = ['HE IS MULTIPLYING', 'MORE ARE COMING', 'ESCAPE IS FUTILE', 'VIKAS IS HERE'];
+                    document.getElementById('warningText').textContent = msgs[Math.floor(Math.random() * msgs.length)];
+                }
+            }
+
+            if (enemies.every(e => !e.alive) && !waveClearing) { waveClearing = true; waveClearTimer = 160; }
+            if (waveClearing) {
+                waveClearTimer--;
+                if (waveClearTimer <= 0) {
+                    wave++; generateMap();
+                    const s = findOpen(); player.x = s.x; player.y = s.y;
+                    enemies = []; particles = []; bloodSplats = [];
+                    spawnEnemies(3 + wave * 2);
+                    spawnHealthKits();
+                    waveClearing = false;
+                    enemySpawnInterval = Math.max(85, 280 - wave * 20);
+                    updateHUD();
+                }
+            }
+        }
+
+        // ── SANITY ──
+        function updateSanity() {
+            if (nearestEnemyDist < 4 * TILE) sanity = Math.max(0, sanity - (1 - nearestEnemyDist / (4 * TILE)) * 0.22);
+            else sanity = Math.min(100, sanity + 0.05);
+
+            const sf = document.getElementById('sanityFill');
+            sf.style.width = sanity + '%';
+            sf.style.background = sanity > 60 ? '#9900cc' : sanity > 30 ? '#cc4400' : '#ff0000';
+
+            // Heartbeat when low sanity
+            if (sanity < 50) {
+                heartbeatTimer++;
+                const hbInterval = Math.max(30, 60 * (sanity / 50));
+                if (heartbeatTimer >= hbInterval) { heartbeatTimer = 0; playHeartbeat(); }
+            }
+
+            // Breathing sounds
+            if (sanity < 35) {
+                breathTimer++;
+                if (breathTimer >= 55) { breathTimer = 0; playBreathing(); }
+            }
+
+            // Ambient drone
+            ambientTimer++;
+            if (ambientTimer >= 120 && nearestEnemyDist < 10 * TILE) {
+                ambientTimer = 0;
+                playAmbientDrone(Math.max(0, 1 - nearestEnemyDist / (10 * TILE)));
+            }
+
+            // Sanity effects
+            if (sanity < 30 && !isADS) {
+                fovPulseT += 0.05;
+                adsFOVCurrent = BASE_FOV + Math.sin(fovPulseT) * 0.1 * (1 - sanity / 30);
+                if (Math.random() < 0.01) { staticAlpha = rnd(0.3, 0.6); staticTimer = rnd(12, 35); }
+            }
+
+            // Proximity warning
+            const prox = document.getElementById('proximity');
+            if (nearestEnemyDist < 4 * TILE) {
+                prox.style.opacity = '1';
+                prox.style.color = nearestEnemyDist < 2 * TILE ? '#ff0000' : '#cc4400';
+            } else {
+                prox.style.opacity = '0';
+            }
+        }
+
+        // ── HORROR FX ──
+        function triggerEnemyViewScare() {
+            if (nearestEnemyDist < 5 * TILE) {
+                playJumpscare();
+                jsFlashAlpha = 0.6; jsFlashTimer = 18;
+                shakeTimer = 28; shakeAmt = 12;
+                // Full screen jumpscare occasionally
+                if (Math.random() < 0.3 && nearestEnemyDist < 3 * TILE) {
+                    const jsImg = document.getElementById('jumpscareImg');
+                    jsImg.style.opacity = '0.85';
+                    setTimeout(() => { jsImg.style.opacity = '0'; }, 400);
+                }
+            }
+        }
+
+        function drawStaticNoise(alpha) {
+            const sw = staticCv.width, sh = staticCv.height;
+            const id = stCtx.createImageData(sw, sh);
+            const d = id.data;
+            for (let i = 0; i < d.length; i += 4) {
+                const v = Math.random() * 255;
+                // Tinted red static
+                d[i] = v; d[i + 1] = v * 0.2; d[i + 2] = v * 0.1;
+                d[i + 3] = Math.random() < 0.5 ? 220 : 0;
+            }
+            stCtx.putImageData(id, 0, 0);
+            staticCv.style.opacity = alpha;
+        }
+
+        function updateFlicker() {
+            flickerTimer++;
+            if (flickerTimer % 6 === 0) {
+                flickerVal = 0.88 + Math.random() * 0.14;
+                if (Math.random() < 0.022) flickerVal = 0.2 + Math.random() * 0.5;
+            }
+        }
+
+        function updateFX() {
+            if (bloodAlpha > 0) {
+                bloodAlpha = Math.max(0, bloodAlpha - 0.012);
+                document.getElementById('bloodOverlay').style.opacity = bloodAlpha;
+            }
+            if (jsFlashTimer > 0) {
+                jsFlashTimer--;
+                jsFlashAlpha *= 0.82;
+                document.getElementById('jumpscareFlash').style.opacity = jsFlashAlpha;
+                if (shakeTimer > 0) {
+                    shakeTimer--;
+                    const sf = shakeTimer / 30;
+                    document.body.style.transform = `translate(${(Math.random() - 0.5) * shakeAmt * sf}px,${(Math.random() - 0.5) * shakeAmt * 0.7 * sf}px)`;
+                } else { document.body.style.transform = ''; }
+            } else {
+                document.getElementById('jumpscareFlash').style.opacity = 0;
+                if (shakeTimer <= 0) document.body.style.transform = '';
+            }
+            if (staticTimer > 0) {
+                staticTimer--;
+                drawStaticNoise(Math.max(0, staticAlpha * (staticTimer / 35)));
+            } else { staticCv.style.opacity = 0; }
+            if (warningTimer > 0) {
+                warningTimer--;
+                const el = document.getElementById('warningText');
+                el.style.opacity = warningTimer < 25 ? (warningTimer / 25).toString() : '1';
+                if (Math.random() < 0.12) {
+                    el.style.transform = `translate(calc(-50% + ${(Math.random() - 0.5) * 10}px),calc(-50% + ${(Math.random() - 0.5) * 6}px))`;
+                }
+            } else {
+                const el = document.getElementById('warningText');
+                el.style.opacity = '0'; el.style.transform = 'translate(-50%,-50%)';
+            }
+        }
+
+        // ── HUD ──
+        function updateHUD() {
+            document.getElementById('score').textContent = `SCORE: ${score}`;
+            document.getElementById('health').textContent = `❤ HP: ${Math.max(0, Math.ceil(player.health))}`;
+            document.getElementById('wave').textContent = `WAVE ${wave} | KILLS: ${totalKills}`;
+            document.getElementById('keysHUD').textContent = `KEYS: ${collectedKeys}/${NUM_GAME_KEYS}`;
+        }
+
+        // ── RENDER ──
+        function render() {
+            const W = canvas.width, H = canvas.height;
+            const nRays = Math.floor(W / 1.4);
+            const zBuf = new Array(W).fill(MAX_DEPTH * TILE);
+
+            // Ceiling - dark oppressive
+            ctx.fillStyle = '#0a0800'; ctx.fillRect(0, 0, W, H / 2);
+            // Ceiling flicker lights
+            if (flickerVal < 0.6) {
+                ctx.fillStyle = `rgba(180,140,20,${(0.6 - flickerVal) * 0.3})`;
+                ctx.fillRect(0, 0, W, H / 2);
+            }
+
+            // Floor gradient
+            const fg = ctx.createLinearGradient(0, H / 2, 0, H);
+            fg.addColorStop(0, '#201808'); fg.addColorStop(1, '#060300');
+            ctx.fillStyle = fg; ctx.fillRect(0, H / 2, W, H / 2);
+
+            for (let i = 0; i < nRays; i++) {
+                const rAng = player.angle - currentFOV / 2 + (i / nRays) * currentFOV;
+                const { dist: raw, side, tex, type } = castRay(rAng);
+                const cd = raw * Math.cos(rAng - player.angle);
+                const wH = Math.min(H * 2, (TILE / cd) * (H * 0.88));
+                const wTop = H / 2 - wH / 2;
+                const shade = Math.max(0.03, Math.min(1, 1 - cd / (MAX_DEPTH * TILE * 0.48)));
+                const b = shade * (side === 1 ? 0.65 : 1.0) * flickerVal;
+
+                let baser = 200, baseg = 200, baseb = 200, trimR = 0, trimG = 0, trimB = 0;
+                let hasStripes = false;
+                if (type === 1) { baser = 180; baseg = 170; baseb = 160; trimR = 100; trimG = 90; trimB = 80; hasStripes = true; }
+                else if (type === 2) { baser = 220; baseg = 230; baseb = 240; trimR = 50; trimG = 100; trimB = 150; }
+                else if (type === 3) { baser = 180; baseg = 50; baseb = 50; trimR = 100; trimG = 20; trimB = 20; }
+                else if (type === 4) { baser = 40; baseg = 180; baseb = 60; trimR = 20; trimG = 100; trimB = 30; }
+                else if (type === 5) { baser = 150; baseg = 200; baseb = 210; trimR = 80; trimG = 120; trimB = 130; }
+                else if (type === 6) { baser = 240; baseg = 250; baseb = 255; trimR = 200; trimG = 210; trimB = 220; hasStripes = true; }
+                else if (type === 7) { baser = 160; baseg = 110; baseb = 70; trimR = 120; trimG = 80; trimB = 50; }
+                else if (type === 8) { baser = 139; baseg = 69; baseb = 19; trimR = 100; trimG = 50; trimB = 10; }
+                else if (type === 9) { baser = 180; baseg = 240; baseb = 255; trimR = 100; trimG = 200; trimB = 255; }
+                else if (type === 10) { baser = 100; baseg = 50; baseb = 20; trimR = 60; trimG = 30; trimB = 10; }
+                else if (type === 11) { baser = 139; baseg = 69; baseb = 19; trimR = 60; trimG = 30; trimB = 10; hasStripes = true; }
+                else if (type === 12) { baser = 255; baseg = 215; baseb = 0; trimR = 255; trimG = 255; trimB = 150; }
+
+                const r = Math.floor(baser * b), g = Math.floor(baseg * b), bl = Math.floor(baseb * b);
+                const scrX = (i / nRays) * W, cW = Math.ceil(W / nRays) + 1;
+
+                ctx.fillStyle = `rgb(${r},${g},${bl})`;
+                ctx.fillRect(scrX, wTop, cW, wH);
+
+                if (b > 0.1) {
+                    if (hasStripes && Math.floor(scrX) % 52 < 2) { ctx.fillStyle = `rgba(0,0,0,${0.3 * b})`; ctx.fillRect(scrX, wTop, 2, wH); }
+                    ctx.fillStyle = `rgba(${trimR},${trimG},${trimB},${0.4 * b})`;
+                    ctx.fillRect(scrX, wTop + wH * 0.38, cW, wH * 0.05);
+                    ctx.fillStyle = `rgba(0,0,0,${0.5 * b})`;
+                    ctx.fillRect(scrX, wTop, cW, 3);
+                    ctx.fillRect(scrX, wTop + wH - 3, cW, 3);
+                }
+
+                // Fog
+                ctx.fillStyle = `rgba(8,5,1,${Math.pow(1 - shade, 1.8) * 0.9})`;
+                ctx.fillRect(scrX, wTop, cW, wH);
+
+                const sc = Math.floor(scrX), ec = Math.min(W, sc + cW);
+                for (let c = sc; c < ec; c++) zBuf[c] = cd;
+            }
+
+            renderBloodSplats(zBuf);
+            renderEnemies(zBuf);
+            drawParticles(zBuf);
+            renderHealthKits(zBuf);
+            renderGameKeys(zBuf);
+
+            // Interaction overlay highlight for doors
+            const ca = Math.cos(player.angle), sa = Math.sin(player.angle);
+            for (let d = 0; d < TILE * 1.5; d += 5) {
+                const wx = player.x + ca * d, wy = player.y + sa * d;
+                const mx = Math.floor(wx / TILE), my = Math.floor(wy / TILE);
+                if (mx >= 0 && mx < MAP_W && my >= 0 && my < MAP_H) {
+                    if (map[my][mx] === 11 || map[my][mx] === 12) {
+                        ctx.save();
+                        ctx.globalAlpha = 0.9; ctx.fillStyle = map[my][mx] === 12 ? '#ffcc00' : '#ffffff';
+                        ctx.font = `bold 16px monospace`;
+                        ctx.textAlign = 'center'; ctx.fillText('[E] INTERACT DOOR', W / 2, H / 2 + 40);
+                        ctx.restore();
+                        break;
+                    }
+                }
+            }
+
+            // Vignette
+            const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.15, W / 2, H / 2, H * 0.9);
+            vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,0.88)');
+            ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
+
+            // Sanity purple tint
+            if (sanity < 40) {
+                ctx.fillStyle = `rgba(60,0,80,${(1 - sanity / 40) * 0.18})`;
+                ctx.fillRect(0, 0, W, H);
+            }
+
+            // Chromatic aberration at low sanity
+            if (sanity < 20) {
+                ctx.save();
+                ctx.globalAlpha = (1 - sanity / 20) * 0.08;
+                ctx.drawImage(canvas, -3, 0, W, H);
+                ctx.globalCompositeOperation = 'screen';
+                ctx.fillStyle = 'rgba(255,0,0,0.05)';
+                ctx.fillRect(0, 0, W, H);
+                ctx.restore();
+            }
+
+            // Gun
+            if (gunCanvas) {
+                const gw = Math.floor(W * 0.33);
+                const gh = gw;
+                const adsRatio = (BASE_FOV - adsFOVCurrent) / (BASE_FOV - ADS_FOV);
+                const recoilY = recoil * 3.8, recoilX = recoil * 1.2;
+                const gx = W * 0.5 - gw * 0.5 + recoilX;
+                const gyBase = H - gh + Math.floor(gh * 0.18) + recoilY + adsGunY;
+
+                ctx.save();
+                if (adsRatio > 0.35) {
+                    ctx.fillStyle = `rgba(0,0,0,${(adsRatio - 0.35) * 1.8})`;
+                    ctx.fillRect(0, 0, W * 0.25, H);
+                    ctx.fillRect(W * 0.75, 0, W * 0.25, H);
+                }
+                // Gun shadow
+                ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 20;
+                ctx.drawImage(gunCanvas, gx, gyBase, gw, gh);
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+
+            // Muzzle flash
+            if (muzzleFlash > 0) {
+                ctx.save();
+                const mf = muzzleFlash / 9;
+                ctx.globalAlpha = mf * 0.9;
+                // Big orange/white flash
+                const grad = ctx.createRadialGradient(W / 2, H - 170 + recoil, 0, W / 2, H - 170 + recoil, 50);
+                grad.addColorStop(0, 'rgba(255,255,200,1)'); grad.addColorStop(0.4, 'rgba(255,160,0,0.8)'); grad.addColorStop(1, 'rgba(255,50,0,0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath(); ctx.arc(W / 2, H - 170 + recoil, 50, 0, Math.PI * 2); ctx.fill();
+                ctx.globalAlpha = mf * 0.2; ctx.fillStyle = 'rgba(255,200,0,1)'; ctx.fillRect(0, 0, W, H);
+                ctx.restore(); muzzleFlash--;
+            }
+
+            // Wave clear message
+            if (waveClearing) {
+                ctx.save(); ctx.globalAlpha = 0.88;
+                ctx.font = `bold ${Math.floor(H * 0.048)}px 'Creepster',cursive`;
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#ff6600';
+                ctx.shadowColor = '#ff3300'; ctx.shadowBlur = 30;
+                ctx.fillText(`WAVE CLEAR — WAVE ${wave + 1} COMMENCING`, W / 2, H * 0.16);
+                ctx.shadowBlur = 0; ctx.restore();
+            }
+        }
+
+        // ── MINIMAP ──
+        function renderMinimap() {
+            const mw = miniCv.width, mh = miniCv.height;
+            const cw = mw / MAP_W, ch = mh / MAP_H;
+            mctx.fillStyle = 'rgba(5,3,0,0.92)'; mctx.fillRect(0, 0, mw, mh);
+            for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) {
+                let col = '#1a0a0045';
+                if (map[y][x] === 1) col = '#88888855';
+                if (map[y][x] === 2) col = '#aaaadd55';
+                if (map[y][x] === 3) col = '#dd444455';
+                if (map[y][x] === 4) col = '#44dd4455';
+                if (map[y][x] === 5) col = '#44dddd55';
+                if (map[y][x] === 6) col = '#eeeeee55';
+                if (map[y][x] === 7) col = '#aa774455';
+                if (map[y][x] === 8) col = '#8b451355';
+                if (map[y][x] === 9) col = '#aaddff55';
+                if (map[y][x] === 10) col = '#66331155';
+                if (map[y][x] === 11) col = '#8b4513aa';
+                if (map[y][x] === 12) col = '#ffcc00aa';
+                mctx.fillStyle = col;
+                mctx.fillRect(x * cw, y * ch, cw - 0.5, ch - 0.5);
+            }
+            const px = (player.x / TILE) * cw, py = (player.y / TILE) * ch;
+            mctx.fillStyle = '#fff'; mctx.beginPath(); mctx.arc(px, py, 2.5, 0, Math.PI * 2); mctx.fill();
+            mctx.strokeStyle = '#ffaa00'; mctx.lineWidth = 1.5;
+            mctx.beginPath(); mctx.moveTo(px, py);
+            mctx.lineTo(px + Math.cos(player.angle) * 9, py + Math.sin(player.angle) * 9); mctx.stroke();
+            for (const e of enemies) {
+                if (!e.alive) continue;
+                mctx.fillStyle = '#ff4400';
+                mctx.shadowColor = '#ff0000'; mctx.shadowBlur = 4;
+                mctx.beginPath(); mctx.arc((e.x / TILE) * cw, (e.y / TILE) * ch, 2.5, 0, Math.PI * 2); mctx.fill();
+                mctx.shadowBlur = 0;
+            }
+            for (const k of healthKits) {
+                if (!k.alive) continue;
+                const kx = (k.x / TILE) * cw, ky = (k.y / TILE) * ch;
+                mctx.fillStyle = '#00dd66';
+                mctx.fillRect(kx - 1, ky - 3, 2, 6); mctx.fillRect(kx - 3, ky - 1, 6, 2);
+            }
+            for (const k of gameKeys) {
+                if (!k.alive) continue;
+                const kx = (k.x / TILE) * cw, ky = (k.y / TILE) * ch;
+                mctx.fillStyle = '#ffcc00';
+                mctx.beginPath(); mctx.arc(kx, ky, 2.5, 0, Math.PI * 2); mctx.fill();
+            }
+        }
+
+        // ── GAME LOOP ──
+        function gameLoop() {
+            if (!gameRunning) return;
+            updateFlicker();
+            if (!gameOver) {
+                movePlayer(); updateEnemies(); updateParticles(); updateSanity(); updateFX();
+                if (shootCooldown > 0) shootCooldown--;
+                if (recoil > 0) { recoil -= 1.4; if (recoil < 0) recoil = 0; }
+                if (hitMarkerTimer > 0) { hitMarkerTimer--; if (hitMarkerTimer === 0) document.getElementById('hitMarker').style.opacity = '0'; }
+            }
+            render(); renderMinimap();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ── CONTROLS ──
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            gameRunning = true;
+            initGame();
+            if (isMobile) setupMobile();
+            requestAnimationFrame(gameLoop);
+            document.getElementById("bgMusic").volume = 0.4;
+            document.getElementById("bgMusic").play().catch(e => console.log('Audio error:', e));
+        }
+        function triggerGameOver() {
+            gameOver = true; gameRunning = false;
+            playJumpscare();
+            // Show jumpscare face on death
+            const jsImg = document.getElementById('jumpscareImg');
+            jsImg.style.opacity = '1';
+            setTimeout(() => {
+                jsImg.style.opacity = '0';
+                document.getElementById('gameOver').style.display = 'flex';
+                document.getElementById('finalScore').textContent = `SCORE: ${score} | KILLS: ${totalKills}`;
+                document.getElementById('finalWave').textContent = `SURVIVED TO WAVE ${wave}`;
+            }, 1200);
+        }
+
+        function triggerWin() {
+            escaped = true; gameRunning = false;
+            document.getElementById('gameWin').style.display = 'flex';
+            document.getElementById('winScore').textContent = `SCORE: ${score} | KILLS: ${totalKills} | WAVES: ${wave}`;
+        }
+
+        function restartGame() {
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('gameWin').style.display = 'none';
+            ['bloodOverlay', 'jumpscareFlash', 'staticOverlay', 'warningText'].forEach(id => {
+                document.getElementById(id).style.opacity = '0';
+            });
+            document.getElementById('jumpscareImg').style.opacity = '0';
+            document.body.style.transform = '';
+            gameRunning = true; gameOver = false;
+            initGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        document.addEventListener('keydown', e => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.key === ' ' || e.key.toLowerCase() === 'f') shoot();
+            if (e.key.toLowerCase() === 'e') tryInteract();
+        });
+        document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+        canvas.addEventListener('mousedown', e => {
+            if (!isMobile && gameRunning) {
+                if (document.pointerLockElement !== canvas) { canvas.requestPointerLock(); return; }
+            }
+            if (!gameRunning || gameOver) return;
+            if (e.button === 0) shoot();
+            if (e.button === 2) isADS = true;
+        });
+        canvas.addEventListener('mouseup', e => { if (e.button === 2) isADS = false; });
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('mousemove', e => { if (document.pointerLockElement === canvas) mouseDX += e.movementX; });
+
+        function setupMobile() {
+            const zone = document.getElementById('joystick-zone') || document.createElement('div');
+            // Mobile controls abbreviated
+        }
+
+        function dst(x1, y1, x2, y2) { const dx = x2 - x1, dy = y2 - y1; return Math.sqrt(dx * dx + dy * dy); }
+        function rnd(a, b) { return a + Math.random() * (b - a); }
+    </script>
+</body>
+
+</html>
